@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Buddy - Food Label Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ccfbf1 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #059669;
+        }
+
+        .btn-new-scan {
+            background: #059669;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-new-scan:hover {
+            background: #047857;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .welcome-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 48px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .welcome-title {
+            font-size: 42px;
+            font-weight: bold;
+            color: #059669;
+            margin-bottom: 16px;
+        }
+
+        .welcome-quote {
+            color: #6b7280;
+            font-style: italic;
+            margin-bottom: 40px;
+        }
+
+        .camera-icon {
+            width: 96px;
+            height: 96px;
+            background: #d1fae5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+        }
+
+        .camera-icon svg {
+            width: 48px;
+            height: 48px;
+            color: #059669;
+        }
+
+        .upload-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .btn-upload,
+        .btn-camera {
+            width: 100%;
+            background: #059669;
+            color: white;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .btn-upload:hover,
+        .btn-camera:hover {
+            background: #047857;
+        }
+
+        .btn-camera {
+            background: #3b82f6;
+        }
+
+        .btn-camera:hover {
+            background: #2563eb;
+        }
+
+        /* Camera Modal */
+        .camera-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-modal.active {
+            display: flex;
+        }
+
+        .camera-container {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        #cameraVideo,
+        #capturedCanvas {
+            width: 100%;
+            border-radius: 8px;
+            background: #000;
+        }
+
+        #capturedCanvas {
+            display: none;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .camera-controls button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-capture {
+            background: #059669;
+            color: white;
+        }
+
+        .btn-capture:hover {
+            background: #047857;
+        }
+
+        .btn-retake {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-retake:hover {
+            background: #d97706;
+        }
+
+        .btn-use-photo {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-use-photo:hover {
+            background: #2563eb;
+        }
+
+        .btn-cancel {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #dc2626;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 64px;
+            height: 64px;
+            border: 4px solid #d1fae5;
+            border-top-color: #059669;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 24px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Quick Verdict Card */
+        .quick-verdict {
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 3px solid;
+        }
+
+        .quick-verdict.buy {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-color: #10b981;
+            color: #065f46;
+        }
+
+        .quick-verdict.moderate {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+
+        .quick-verdict.avoid {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+
+        .verdict-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .verdict-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .quick-verdict.buy .verdict-icon {
+            background: #10b981;
+            color: white;
+        }
+
+        .quick-verdict.moderate .verdict-icon {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .quick-verdict.avoid .verdict-icon {
+            background: #ef4444;
+            color: white;
+        }
+
+        .verdict-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .verdict-summary {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            opacity: 0.95;
+        }
+
+        .verdict-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .verdict-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .verdict-section {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .verdict-section-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .verdict-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .verdict-list li {
+            padding: 6px 0;
+            padding-left: 24px;
+            position: relative;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .verdict-list li:before {
+            content: '•';
+            position: absolute;
+            left: 8px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .key-points {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .key-points-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Product Overview */
+        .product-overview {
+            background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .product-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .product-brand {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+        }
+
+        .product-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Health Score */
+        .health-score-card {
+            border: 2px solid;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .health-score-card.excellent {
+            background: #f0fdf4;
+            border-color: #10b981;
+            color: #065f46;
+        }
+
+        .health-score-card.good {
+            background: #fffbeb;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+
+        .health-score-card.poor {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+
+        .health-score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .health-score-value {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .health-score-list {
+            list-style: none;
+            margin-top: 16px;
+        }
+
+        .health-score-list li {
+            margin-bottom: 8px;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .health-score-list li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+        }
+
+        /* Ingredients */
+        .ingredients-section {
+            margin-top: 24px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+
+        .ingredient-group {
+            margin-bottom: 20px;
+        }
+
+        .ingredient-group-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .ingredient-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .tag-main {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .tag-beneficial {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .tag-concerning {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .tag-additive {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+
+        /* Allergen Warning */
+        .allergen-warning {
+            background: #fef2f2;
+            border: 2px solid #ef4444;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .allergen-title {
+            font-weight: bold;
+            color: #991b1b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Chat Box */
+        .chat-box {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+            position: sticky;
+            top: 90px;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .chat-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .chat-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message-user {
+            background: #059669;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-assistant {
+            background: #f3f4f6;
+            color: #1f2937;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .suggested-questions {
+            padding: 12px 20px;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .suggested-title {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .suggested-btn {
+            width: 100%;
+            text-align: left;
+            background: white;
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #374151;
+            cursor: pointer;
+            margin-bottom: 6px;
+            transition: all 0.2s;
+        }
+
+        .suggested-btn:hover {
+            background: #f9fafb;
+            border-color: #059669;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+        }
+
+        .btn-send {
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-send:hover {
+            background: #047857;
+        }
+
+        .btn-send:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Recommendations */
+        .recommendations-box {
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .recommendations-title {
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 12px;
+        }
+
+        .recommendations-text {
+            color: #1e3a8a;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header (hidden initially) -->
+    <header id="header" class="header hidden">
+        <div class="header-content">
+            <div class="logo">Health Buddy</div>
+            <button class="btn-new-scan" onclick="resetApp()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16" />
+                </svg>
+                New Scan
+            </button>
+        </div>
+    </header>
+
+    <!-- Welcome Screen -->
+    <div id="welcomeScreen" class="welcome-screen">
+        <div class="welcome-card">
+            <h1 class="welcome-title">Health Buddy</h1>
+            <p class="welcome-quote">"Let food be thy medicine and medicine be thy food." - Hippocrates</p>
+
+            <div class="camera-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                </svg>
+            </div>
+
+            <h2 style="font-size: 20px; font-weight: 600; color: #1f2937; margin-bottom: 12px;">Scan Food Label</h2>
+            <p style="color: #6b7280; font-size: 14px; margin-bottom: 32px;">
+                Upload a photo or capture with camera to get instant nutritional insights
+            </p>
+
+            <div class="upload-options">
+                <input type="file" id="fileInput" accept="image/*" style="display: none;"
+                    onchange="handleFileUpload(event)">
+                <button class="btn-camera" onclick="openCamera()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    <span>Take Photo</span>
+                </button>
+                <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span>Upload Image</span>
+                </button>
+            </div>
+
+            <p style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
+                Supported formats: JPEG, PNG, GIF, WebP (max 10MB)
+            </p>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="camera-modal">
+        <div class="camera-container">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <canvas id="capturedCanvas"></canvas>
+            <div class="camera-controls">
+                <button id="captureBtn" class="btn-capture" onclick="capturePhoto()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    Capture
+                </button>
+                <button id="retakeBtn" class="btn-retake hidden" onclick="retakePhoto()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8" />
+                    </svg>
+                    Retake
+                </button>
+                <button id="usePhotoBtn" class="btn-use-photo hidden" onclick="usePhoto()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Use Photo
+                </button>
+                <button class="btn-cancel" onclick="closeCamera()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen hidden">
+        <div class="spinner"></div>
+        <h2 style="font-size: 24px; font-weight: 600; color: #1f2937; margin-bottom: 8px;">Analyzing Your Product...
+        </h2>
+        <p style="color: #6b7280;">This may take a few moments</p>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" class="container hidden">
+        <div class="main-content">
+            <!-- Left Column -->
+            <div>
+                <!-- Quick Verdict -->
+                <div id="quickVerdict" class="quick-verdict" style="display: none;">
+                    <!-- Will be populated by JS -->
+                </div>
+
+                <!-- Product Overview -->
+                <div id="productOverview" class="product-overview">
+                    <!-- Will be populated by JS -->
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="card">
+                        <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #1f2937;">
+                            Macronutrient Distribution
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="macroChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div id="healthScoreCard">
+                        <!-- Will be populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Ingredients -->
+                <div class="card ingredients-section">
+                    <h3 class="section-title">Ingredients Analysis</h3>
+                    <div id="ingredientsContainer">
+                        <!-- Will be populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Allergens -->
+                <div id="allergenWarning" class="allergen-warning hidden">
+                    <!-- Will be populated by JS -->
+                </div>
+
+                <!-- Recommendations -->
+                <div id="recommendationsBox" class="recommendations-box hidden">
+                    <!-- Will be populated by JS -->
+                </div>
+            </div>
+
+            <!-- Right Column - Chat -->
+            <div>
+                <div class="chat-box">
+                    <div class="chat-header">
+                        <div class="chat-title">Ask Questions</div>
+                        <div class="chat-subtitle">Get personalized insights</div>
+                    </div>
+
+                    <div id="chatMessages" class="chat-messages">
+                        <!-- Messages will be added here -->
+                    </div>
+
+                    <div id="suggestedQuestions" class="suggested-questions hidden">
+                        <div class="suggested-title">Suggested questions:</div>
+                        <div id="suggestedQuestionsContainer"></div>
+                    </div>
+
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" class="chat-input"
+                            placeholder="Ask about ingredients, nutrition..." onkeypress="handleKeyPress(event)">
+                        <button id="sendBtn" class="btn-send" onclick="sendMessage()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://health-buddy-backend-e80t.onrender.com';
+        let sessionId = null;
+        let productData = null;
+        let macroChart = null;
+        let cameraStream = null;
+        let capturedImageBlob = null;
+
+        // Quick API health check to detect backend availability early
+        async function checkApiHealth() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/health`);
+                if (!res.ok) throw new Error(`API health check failed: ${res.status}`);
+                console.log('API health check OK');
+            } catch (err) {
+                console.warn('API not reachable at', API_BASE_URL, err);
+                // Non-blocking notification — let user interact with upload option
+                const banner = document.createElement('div');
+                banner.style.background = '#fff7ed';
+                banner.style.border = '1px solid #f59e0b';
+                banner.style.padding = '12px';
+                banner.style.margin = '12px';
+                banner.style.borderRadius = '8px';
+                banner.style.color = '#92400e';
+                banner.textContent = `Warning: Backend API not reachable at ${API_BASE_URL}. Some features may not work.`;
+                document.body.prepend(banner);
+            }
+        }
+
+        // run health check on load
+        checkApiHealth();
+
+        // Global error and unhandled rejection handlers to surface runtime errors
+        function showErrorBanner(message, stack) {
+            let banner = document.getElementById('jsErrorBanner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'jsErrorBanner';
+                banner.style.position = 'fixed';
+                banner.style.left = '12px';
+                banner.style.right = '12px';
+                banner.style.bottom = '12px';
+                banner.style.zIndex = '99999';
+                banner.style.background = '#fff1f2';
+                banner.style.color = '#7f1d1d';
+                banner.style.border = '1px solid #fecaca';
+                banner.style.padding = '12px 16px';
+                banner.style.borderRadius = '8px';
+                banner.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08)';
+
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = '✕';
+                closeBtn.style.float = 'right';
+                closeBtn.style.border = 'none';
+                closeBtn.style.background = 'transparent';
+                closeBtn.style.fontSize = '16px';
+                closeBtn.style.cursor = 'pointer';
+                closeBtn.addEventListener('click', () => banner.remove());
+                banner.appendChild(closeBtn);
+
+                const content = document.createElement('div');
+                content.id = 'jsErrorBannerContent';
+                content.style.marginTop = '4px';
+                banner.appendChild(content);
+
+                document.body.appendChild(banner);
+            }
+            const content = document.getElementById('jsErrorBannerContent');
+            content.innerHTML = `<strong>Runtime error:</strong> ${String(message)}${stack ? `<pre style="white-space:pre-wrap;margin-top:8px;color:#4b5563">${String(stack)}</pre>` : ''}`;
+        }
+
+        window.addEventListener('error', (event) => {
+            console.error('Unhandled error:', event.error || event.message, event.error?.stack);
+            showErrorBanner(event.message || String(event.error), event.error?.stack);
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled rejection:', event.reason);
+            const reason = event.reason && (event.reason.message || event.reason.toString()) || JSON.stringify(event.reason);
+            showErrorBanner(`Unhandled promise rejection: ${reason}`, event.reason?.stack);
+        });
+
+        // Camera Functions
+        async function openCamera() {
+            const modal = document.getElementById('cameraModal');
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.getElementById('capturedCanvas');
+
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                video.srcObject = cameraStream;
+                video.style.display = 'block';
+                canvas.style.display = 'none';
+                modal.classList.add('active');
+
+                document.getElementById('captureBtn').classList.remove('hidden');
+                document.getElementById('retakeBtn').classList.add('hidden');
+                document.getElementById('usePhotoBtn').classList.add('hidden');
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Unable to access camera. Please use the upload option instead.');
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.getElementById('capturedCanvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+
+            video.style.display = 'none';
+            canvas.style.display = 'block';
+
+            document.getElementById('captureBtn').classList.add('hidden');
+            document.getElementById('retakeBtn').classList.remove('hidden');
+            document.getElementById('usePhotoBtn').classList.remove('hidden');
+
+            canvas.toBlob(blob => {
+                capturedImageBlob = blob;
+            }, 'image/jpeg', 0.95);
+        }
+
+        function retakePhoto() {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.getElementById('capturedCanvas');
+
+            video.style.display = 'block';
+            canvas.style.display = 'none';
+
+            document.getElementById('captureBtn').classList.remove('hidden');
+            document.getElementById('retakeBtn').classList.add('hidden');
+            document.getElementById('usePhotoBtn').classList.add('hidden');
+
+            capturedImageBlob = null;
+        }
+
+        function usePhoto() {
+            if (!capturedImageBlob) return;
+
+            const blob = capturedImageBlob;
+            closeCamera();
+            processImage(blob);
+        }
+
+        function closeCamera() {
+            const modal = document.getElementById('cameraModal');
+            const video = document.getElementById('cameraVideo');
+
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+
+            video.srcObject = null;
+            modal.classList.remove('active');
+            capturedImageBlob = null;
+        }
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            processImage(file);
+        }
+
+        async function processImage(imageFile) {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('loadingScreen').classList.remove('hidden');
+
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            console.log('processImage: sending image', { name: imageFile?.name, size: imageFile?.size, type: imageFile?.type });
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Analyze API error: ${response.status} ${response.statusText}`);
+                }
+                const result = await response.json();
+
+                if (result.success && result.data && result.data.formatted) {
+                    sessionId = result.sessionId;
+                    productData = result.data.formatted;
+
+                    document.getElementById('loadingScreen').classList.add('hidden');
+                    document.getElementById('header').classList.remove('hidden');
+                    document.getElementById('mainContent').classList.remove('hidden');
+
+                    try { renderQuickVerdict(); } catch (e) { console.error('renderQuickVerdict failed', e); showErrorBanner('renderQuickVerdict failed', e.stack || e); }
+                    try { renderProductOverview(); } catch (e) { console.error('renderProductOverview failed', e); showErrorBanner('renderProductOverview failed', e.stack || e); }
+                    try { renderMacroChart(); } catch (e) { console.error('renderMacroChart failed', e); showErrorBanner('renderMacroChart failed', e.stack || e); }
+                    try { renderHealthScore(); } catch (e) { console.error('renderHealthScore failed', e); showErrorBanner('renderHealthScore failed', e.stack || e); }
+                    try { renderIngredients(); } catch (e) { console.error('renderIngredients failed', e); showErrorBanner('renderIngredients failed', e.stack || e); }
+                    try { renderAllergens(); } catch (e) { console.error('renderAllergens failed', e); showErrorBanner('renderAllergens failed', e.stack || e); }
+                    try { renderRecommendations(); } catch (e) { console.error('renderRecommendations failed', e); showErrorBanner('renderRecommendations failed', e.stack || e); }
+
+                    addMessage('assistant', `I've analyzed ${productData?.overview?.productName || 'the product'}! Check out the verdict above and feel free to ask me any questions.`);
+
+                    setSuggestedQuestions(result.suggestedQuestions || []);
+                } else {
+                    document.getElementById('loadingScreen').classList.add('hidden');
+                    document.getElementById('welcomeScreen').classList.remove('hidden');
+                    alert('Failed to analyze image: ' + (result.message || 'Please try another image or try again later.'));
+                }
+            } catch (err) {
+                console.error('Error analyzing image:', err);
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('welcomeScreen').classList.remove('hidden');
+                alert('An error occurred while analyzing the image. Please try again.');
+            }
+        }
+
+        function renderQuickVerdict() {
+            const verdict = productData?.quickVerdict;
+            if (!verdict) {
+                document.getElementById('quickVerdict').style.display = 'none';
+                return;
+            }
+
+            const icons = {
+                buy: '✓',
+                moderate: '⚠',
+                avoid: '✕'
+            };
+
+            let html = `
+                <div class="verdict-header">
+                    <div class="verdict-icon">${icons[verdict.recommendation]}</div>
+                    <div>
+                        <div class="verdict-title">${verdict.title}</div>
+                    </div>
+                </div>
+                <div class="verdict-summary">${verdict.summary}</div>
+            `;
+
+            if (verdict.keyPoints && verdict.keyPoints.length > 0) {
+                html += `
+                    <div class="key-points">
+                        <div class="key-points-title">Key Points</div>
+                        <ul class="verdict-list">
+                            ${verdict.keyPoints.map(point => `<li>${point}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if ((verdict.bestFor && verdict.bestFor.length > 0) || (verdict.avoidIf && verdict.avoidIf.length > 0)) {
+                html += '<div class="verdict-grid">';
+
+                if (verdict.bestFor && verdict.bestFor.length > 0) {
+                    html += `
+                        <div class="verdict-section">
+                            <div class="verdict-section-title">✓ Best For</div>
+                            <ul class="verdict-list">
+                                ${verdict.bestFor.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                if (verdict.avoidIf && verdict.avoidIf.length > 0) {
+                    html += `
+                        <div class="verdict-section">
+                            <div class="verdict-section-title">✕ Avoid If</div>
+                            <ul class="verdict-list">
+                                ${verdict.avoidIf.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                html += '</div>';
+            }
+
+            const verdictEl = document.getElementById('quickVerdict');
+            verdictEl.innerHTML = html;
+            verdictEl.className = `quick-verdict ${verdict.recommendation}`;
+            verdictEl.style.display = 'block';
+        }
+
+        function renderProductOverview() {
+            if (!productData || !productData.overview) return;
+            const overview = productData.overview || {};
+            const nutrition = productData.nutrition || {};
+
+            const html = `
+                <div class="product-header">
+                    <div>
+                        <div class="product-title">${overview.productName}</div>
+                        <div class="product-brand">${overview.brand}</div>
+                    </div>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                ${overview.tagline ? `<p style="color: rgba(255,255,255,0.9); font-style: italic; margin-bottom: 20px;">"${overview.tagline}"</p>` : ''}
+                <div class="product-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Calories</div>
+                        <div class="stat-value">${nutrition.calories || 'N/A'}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Serving Size</div>
+                        <div class="stat-value" style="font-size: 18px;">${nutrition.servingSize || 'N/A'}</div>
+                    </div>
+                </div>
+                ${overview.highlights && overview.highlights.length > 0 ? `
+                    <div style="margin-top: 20px;">
+                        ${overview.highlights.map(h => `
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 14px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                                <span>${h}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('productOverview').innerHTML = html;
+        }
+
+        function renderMacroChart() {
+            try {
+                const nutrition = productData.nutrition || {};
+                const macros = nutrition.macros;
+
+                if (!macros) {
+                    const container = document.getElementById('macroChart')?.closest('.chart-container');
+                    if (container) container.innerHTML = '<div style="padding:20px;color:#6b7280">No macronutrient data available.</div>';
+                    return;
+                }
+
+                const data = {
+                    labels: ['Fat', 'Carbs', 'Protein'],
+                    datasets: [{
+                        data: [
+                            parseFloat(macros.fat?.percentage || 0),
+                            parseFloat(macros.carbs?.percentage || 0),
+                            parseFloat(macros.protein?.percentage || 0)
+                        ],
+                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981'],
+                        borderWidth: 0
+                    }]
+                };
+
+                const canvas = document.getElementById('macroChart');
+                const ctx = canvas && canvas.getContext && canvas.getContext('2d');
+                if (!ctx) return;
+
+                if (macroChart) {
+                    macroChart.destroy();
+                }
+
+                macroChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('Error rendering macro chart:', err);
+            }
+        }
+
+        function renderHealthScore() {
+            const healthScore = productData.healthScore;
+            if (!healthScore) return;
+
+            let scoreClass = 'poor';
+            if (healthScore.overall >= 80) scoreClass = 'excellent';
+            else if (healthScore.overall >= 60) scoreClass = 'good';
+
+            const html = `
+                <div class="card health-score-card ${scoreClass}">
+                    <div class="health-score-header">
+                        <div>
+                            <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">Health Score</h3>
+                            <p style="font-size: 14px; opacity: 0.8;">${healthScore.category}</p>
+                        </div>
+                        <div class="health-score-value">${healthScore.overall}</div>
+                    </div>
+                    
+                    ${healthScore.pros && healthScore.pros.length > 0 ? `
+                        <div style="margin-bottom: 16px;">
+                            <p style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">Pros:</p>
+                            <ul class="health-score-list">
+                                ${healthScore.pros.map(pro => `<li>${pro}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${healthScore.cons && healthScore.cons.length > 0 ? `
+                        <div>
+                            <p style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">Cons:</p>
+                            <ul class="health-score-list">
+                                ${healthScore.cons.map(con => `<li>${con}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('healthScoreCard').innerHTML = html;
+        }
+
+        function renderIngredients() {
+            const ingredients = productData.ingredients;
+            if (!ingredients) return;
+
+            let html = '';
+
+            if (ingredients.main && ingredients.main.length > 0) {
+                html += `
+                    <div class="ingredient-group">
+                        <div class="ingredient-group-title">Main Ingredients</div>
+                        <div class="ingredient-tags">
+                            ${ingredients.main.map(ing => `<span class="tag tag-main">${ing}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (ingredients.beneficial && ingredients.beneficial.length > 0) {
+                html += `
+                    <div class="ingredient-group">
+                        <div class="ingredient-group-title" style="color: #065f46;">✓ Beneficial</div>
+                        <div class="ingredient-tags">
+                            ${ingredients.beneficial.map(ing => `<span class="tag tag-beneficial">${ing}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (ingredients.concerning && ingredients.concerning.length > 0) {
+                html += `
+                    <div class="ingredient-group">
+                        <div class="ingredient-group-title" style="color: #991b1b;">⚠ Concerning</div>
+                        <div class="ingredient-tags">
+                            ${ingredients.concerning.map(ing => `<span class="tag tag-concerning">${ing}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (ingredients.additives && ingredients.additives.length > 0) {
+                html += `
+                    <div class="ingredient-group">
+                        <div class="ingredient-group-title" style="color: #92400e;">Additives & Preservatives</div>
+                        <div class="ingredient-tags">
+                            ${ingredients.additives.map(add => `<span class="tag tag-additive">${add}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('ingredientsContainer').innerHTML = html;
+        }
+
+        function renderAllergens() {
+            const allergens = productData.allergens;
+            if (!allergens || allergens.length === 0) {
+                document.getElementById('allergenWarning').classList.add('hidden');
+                return;
+            }
+
+            const html = `
+                <div class="allergen-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    Allergen Warning
+                </div>
+                <div class="ingredient-tags">
+                    ${allergens.map(allergen => `
+                        <span class="tag" style="background: #fee2e2; color: #991b1b; font-weight: 600; border: 1px solid #ef4444;">
+                            ${allergen}
+                        </span>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('allergenWarning').innerHTML = html;
+            document.getElementById('allergenWarning').classList.remove('hidden');
+        }
+
+        function renderRecommendations() {
+            const recommendations = productData.recommendations;
+            if (!recommendations) {
+                document.getElementById('recommendationsBox').classList.add('hidden');
+                return;
+            }
+
+            const html = `
+                <div class="recommendations-title">💡 Recommendations</div>
+                <div class="recommendations-text">${recommendations}</div>
+            `;
+
+            document.getElementById('recommendationsBox').innerHTML = html;
+            document.getElementById('recommendationsBox').classList.remove('hidden');
+        }
+
+        function formatMessage(text) {
+            // Ensure we're working with a string
+            text = (text === undefined || text === null) ? '' : String(text);
+            let formatted = text;
+
+            formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+            const lines = formatted.split('\n');
+            let inList = false;
+            let listType = null;
+            let result = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                if (line.match(/^[-*•]\s+/)) {
+                    if (!inList || listType !== 'ul') {
+                        if (inList) result.push(listType === 'ol' ? '</ol>' : '</ul>');
+                        result.push('<ul style="margin: 8px 0; padding-left: 20px;">');
+                        inList = true;
+                        listType = 'ul';
+                    }
+                    const content = line.replace(/^[-*•]\s+/, '');
+                    result.push(`<li style="margin: 4px 0;">${content}</li>`);
+                } else if (line.match(/^\d+\.\s+/)) {
+                    if (!inList || listType !== 'ol') {
+                        if (inList) result.push(listType === 'ol' ? '</ol>' : '</ul>');
+                        result.push('<ol style="margin: 8px 0; padding-left: 20px;">');
+                        inList = true;
+                        listType = 'ol';
+                    }
+                    const content = line.replace(/^\d+\.\s+/, '');
+                    result.push(`<li style="margin: 4px 0;">${content}</li>`);
+                } else {
+                    if (inList) {
+                        result.push(listType === 'ol' ? '</ol>' : '</ul>');
+                        inList = false;
+                        listType = null;
+                    }
+                    if (line) {
+                        result.push(`<p style="margin: 8px 0;">${line}</p>`);
+                    } else if (i < lines.length - 1 && lines[i + 1].trim()) {
+                        result.push('<br>');
+                    }
+                }
+            }
+
+            if (inList) {
+                result.push(listType === 'ol' ? '</ol>' : '</ul>');
+            }
+
+            formatted = result.join('').replace(/<p style="margin: 8px 0;"><\/p>/g, '');
+
+            return formatted;
+        }
+
+        function addMessage(role, content) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${role}`;
+
+            const safeContent = (content === undefined || content === null) ? '' : content;
+            if (role === 'assistant') {
+                messageDiv.innerHTML = formatMessage(safeContent);
+            } else {
+                messageDiv.textContent = String(safeContent);
+            }
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function setSuggestedQuestions(questions) {
+            if (!questions || questions.length === 0) {
+                document.getElementById('suggestedQuestions').classList.add('hidden');
+                return;
+            }
+
+            const container = document.getElementById('suggestedQuestionsContainer');
+            container.innerHTML = questions.slice(0, 3).map(q => `
+                <button class="suggested-btn" onclick="sendMessage('${q.replace(/'/g, "\\'")}')">
+                    ${q}
+                </button>
+            `).join('');
+
+            document.getElementById('suggestedQuestions').classList.remove('hidden');
+        }
+
+        async function sendMessage(messageText = null) {
+            const input = document.getElementById('chatInput');
+            const message = messageText || input.value.trim();
+
+            if (!message || !sessionId) return;
+
+            console.log('sendMessage:', message, 'sessionId:', sessionId);
+            addMessage('user', message);
+            input.value = '';
+
+            const sendBtn = document.getElementById('sendBtn');
+            input.disabled = true;
+            sendBtn.disabled = true;
+
+            const messagesContainer = document.getElementById('chatMessages');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message message-assistant';
+            loadingDiv.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></div>';
+            loadingDiv.id = 'loadingMessage';
+            messagesContainer.appendChild(loadingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-ID': sessionId
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                if (!response.ok) {
+                    const text = await response.text().catch(() => null);
+                    throw new Error(`Chat API error: ${response.status} ${response.statusText} ${text || ''}`);
+                }
+                const result = await response.json();
+                const loadingEl = document.getElementById('loadingMessage');
+                if (loadingEl) loadingEl.remove();
+
+                if (result.success) {
+                    addMessage('assistant', String(result.response || ''));
+                    if (result.suggestedQuestions) {
+                        setSuggestedQuestions(result.suggestedQuestions);
+                    }
+                } else {
+                    addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const loadingEl = document.getElementById('loadingMessage');
+                if (loadingEl) loadingEl.remove();
+                addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+            } finally {
+                input.disabled = false;
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function resetApp() {
+            closeCamera();
+
+            sessionId = null;
+            productData = null;
+            if (macroChart) {
+                macroChart.destroy();
+                macroChart = null;
+            }
+
+            document.getElementById('fileInput').value = '';
+            document.getElementById('chatInput').value = '';
+            document.getElementById('chatMessages').innerHTML = '';
+
+            document.getElementById('mainContent').classList.add('hidden');
+            document.getElementById('header').classList.add('hidden');
+            document.getElementById('loadingScreen').classList.add('hidden');
+
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+        }
+
+        // sanity log
+        console.log('Health Buddy UI script loaded');
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI-Native Food Ingredient Co-Pilot</title>
+
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #121822;
+      --text: #e6e9ef;
+      --muted: #9aa4b2;
+      --accent: #6cf2c2;
+      --border: #1f2937;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(1200px 600px at 50% -200px, #15202f, var(--bg));
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    ul {
+      margin-left: 20px;
+      margin-top: 10px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 80px 24px;
+    }
+
+    /* ---------- HERO ---------- */
+
+    .hero {
+      text-align: center;
+      margin-bottom: 120px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 6vw, 3.6rem);
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero p {
+      max-width: 760px;
+      margin: auto;
+      font-size: 1.05rem;
+      color: var(--muted);
+    }
+
+    .cta-group {
+      margin-top: 36px;
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      min-width: 180px;
+      text-align: center;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, #6cf2c2, #4dd8ff);
+      color: #08110f;
+      border: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    /* ---------- SECTIONS ---------- */
+
+    section {
+      margin-bottom: 120px;
+    }
+
+    section h2 {
+      font-size: clamp(1.6rem, 4vw, 2rem);
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+
+    section p {
+      color: var(--muted);
+      max-width: 760px;
+      margin-bottom: 28px;
+    }
+
+    /* ---------- PROBLEM ---------- */
+
+    .problem-list {
+      display: grid;
+      gap: 16px;
+      max-width: 760px;
+    }
+
+    .problem-item {
+      background: var(--panel);
+      padding: 20px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    /* ---------- AI NATIVE ---------- */
+
+    .ai-native {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .ai-card {
+      background: var(--panel);
+      padding: 22px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .ai-card h3 {
+      margin-bottom: 10px;
+      font-size: 1.15rem;
+    }
+
+    /* ---------- PROTOTYPES ---------- */
+
+    .prototype-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+
+    .prototype {
+      background: var(--panel);
+      padding: 26px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .badge.primary {
+      background: #1e3a32;
+      color: var(--accent);
+    }
+
+    .badge.secondary {
+      background: #1f2937;
+      color: var(--muted);
+    }
+
+    /* ---------- FLOW ---------- */
+
+    .flow {
+      display: grid;
+      gap: 14px;
+      max-width: 760px;
+    }
+
+    .flow-step {
+      padding: 14px 18px;
+      border-left: 3px solid var(--accent);
+      background: rgba(108, 242, 194, 0.05);
+      border-radius: 8px;
+    }
+
+    /* ---------- FOOTER ---------- */
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* ---------- MOBILE OPTIMIZATION ---------- */
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 56px 20px;
+      }
+
+      section {
+        margin-bottom: 80px;
+      }
+
+      .hero {
+        margin-bottom: 80px;
+      }
+
+      .hero p {
+        font-size: 1rem;
+      }
+
+      .cta-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .prototype-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 44px 16px;
+      }
+
+      section h2 {
+        font-size: 1.45rem;
+      }
+
+      section p {
+        font-size: 0.95rem;
+      }
+
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .badge {
+        font-size: 0.7rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HERO -->
+  <div class="container hero">
+    <h1>Food Ingredients, Explained Like a Human Would</h1>
+    <p>
+      An AI-native consumer health co-pilot that interprets ingredients,
+      reasons under uncertainty, and explains what actually matters —
+      at the exact moment a decision is made.
+    </p>
+
+    <div class="cta-group">
+      <a class="btn primary" href="https://ashish-rautela.github.io/health-buddy/">Health Buddy</a>
+      <a class="btn" href="https://ashish-rautela.github.io/Health_assistant/">Health Assistant (Voice)</a>
+    </div>
+
+    <p style="margin-top: 14px; font-size: 0.9rem; color: var(--muted);">
+      Recommended: Start with <strong>Health Buddy</strong> for the full AI-native reasoning experience.
+    </p>
+  </div>
+
+  <div class="container">
+
+    <section>
+      <h2>The Consumer Health Gap</h2>
+      <p>
+        Food labels are optimized for regulatory compliance — not for human understanding.
+        Consumers are left to parse chemistry, trade-offs, and uncertainty on their own.
+      </p>
+
+      <div class="problem-list">
+        <div class="problem-item">Unfamiliar chemical ingredient names</div>
+        <div class="problem-item">Conflicting health guidance</div>
+        <div class="problem-item">High cognitive load at decision time</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>What Makes This AI-Native</h2>
+      <p>
+        This system does not behave like a database or filter tool.
+        AI itself is the interface.
+      </p>
+
+      <div class="ai-native">
+        <div class="ai-card">
+          <h3>Intent-First</h3>
+          <p>Infers what the user likely cares about.</p>
+        </div>
+        <div class="ai-card">
+          <h3>Reasoning</h3>
+          <p>Explains why something matters.</p>
+        </div>
+        <div class="ai-card">
+          <h3>Uncertainty</h3>
+          <p>Honest about ambiguity and trade-offs.</p>
+        </div>
+        <div class="ai-card">
+          <h3>Cognitive Relief</h3>
+          <p>Does the thinking for the user.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Why Two Prototypes?</h2>
+      <p>
+        We explored two interaction styles to understand how AI-native
+        experiences support real-world decision-making.
+      </p>
+
+      <div class="prototype-grid">
+        <div class="prototype">
+          <span class="badge primary">Primary</span>
+          <h3>Health Buddy</h3>
+          <ul>
+            <li>Reasoning-first experience</li>
+            <li>Intent inferred automatically</li>
+            <li>Clear explanation of trade-offs</li>
+          </ul>
+        </div>
+
+        <div class="prototype">
+          <span class="badge secondary">Exploratory</span>
+          <h3>Health Assistant (Voice)</h3>
+          <ul>
+            <li>Voice-first interaction</li>
+            <li>Minimal cognitive effort</li>
+            <li>Accessibility exploration</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    Built for Code To Innovate · AI-Native Consumer Health Experience
+  </footer>
+
+</body>
+</html>
