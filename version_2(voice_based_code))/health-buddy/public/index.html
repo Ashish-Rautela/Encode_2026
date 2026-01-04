@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Buddy - Your AI Food Label Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2E7D32;
+            --accent-color: #8BC34A;
+            --background-color: #F5F5F5;
+            --text-color: #333;
+            --light-text: #757575;
+            --white: #FFFFFF;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            max-width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .camera-container {
+            width: 100%;
+            max-width: 800px;
+            height: 60vh;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 60vh;
+            background-color: var(--white);
+            border-radius: 12px;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+
+        .message {
+            max-width: 80%;
+            margin: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bot-message {
+            background-color: #E8F5E9;
+            align-self: flex-start;
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .user-message {
+            background-color: var(--primary-color);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0.25rem;
+        }
+
+        .quotes-container {
+            text-align: center;
+            margin: 2rem 0;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .quote {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--light-text);
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            position: absolute;
+            transition: opacity 1s ease-in-out;
+        }
+
+        /* Team Info and Workflow Styles */
+        .info-section {
+            text-align: center;
+            margin: 1rem 0 2rem;
+            padding: 0 1rem;
+        }
+
+        .team-info {
+            color: #ff4d4d;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .workflow-steps {
+            color: #ff4d4d;
+            font-size: 0.9rem;
+            text-align: left;
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: rgba(255, 77, 77, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .workflow-steps p {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .workflow-steps ol {
+            padding-left: 1.5rem;
+            margin: 0;
+        }
+
+        .workflow-steps li {
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .quote.active {
+            opacity: 1;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 1.5rem;
+            gap: 1rem;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-capture {
+            background: linear-gradient(145deg, #ff4d4d, #ff6666);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0;
+            outline: none;
+        }
+
+        .btn-capture:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 77, 77, 0.4);
+        }
+
+        .btn-capture:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        .btn-capture svg {
+            width: 30px;
+            height: 30px;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-capture:active svg {
+            transform: scale(0.9);
+        }
+
+        .btn-mic {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .btn-mic.listening {
+            background-color: #F44336;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status {
+            margin-top: 1rem;
+            color: var(--light-text);
+            font-size: 0.9rem;
+            text-align: center;
+            min-height: 1.5rem;
+        }
+
+        .error {
+            color: #D32F2F;
+            text-align: center;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background-color: #FFEBEE;
+            border-radius: 4px;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (max-width: 768px) {
+            .camera-container, .chat-container {
+                height: 50vh;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .quote {
+                font-size: 1rem;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>Health Buddy</h1>
+        </header>
+
+        <main class="main-content">
+            <!-- Team Info and Instructions -->
+            <div class="info-section">
+                <p class="team-info">This is a project made by team Cypher Chasers, for EnCode 26 Hackathon, by IIT Guwahati</p>
+                <div class="workflow-steps">
+                    <p>How to use:</p>
+                    <ol>
+                        <li>Click the camera button to take a photo of your food label</li>
+                        <li>Get instant nutrition analysis</li>
+                        <li>Ask questions if any </li>
+                        <li>To end simply, say good bye.</li>
+                    </ol>
+                    <p>Note: The shound response may get delayed sometimes.</p>
+                </div>
+            </div>
+
+            <!-- Initial View -->
+            <div class="quotes-container" id="quotesContainer">
+                <div class="quote active">"Let food be thy medicine and medicine be thy food." - Hippocrates</div>
+                <div class="quote">"Eating healthy food fills your body with energy and nutrients."</div>
+                <div class="quote">"The food you eat can be either the safest and most powerful form of medicine or the slowest form of poison." - Ann Wigmore</div>
+                <div class="quote">"A healthy outside starts from the inside." - Robert Urich</div>
+            </div>
+
+            <!-- Camera View -->
+            <div class="camera-container" id="cameraContainer">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas"></canvas>
+                <button class="btn btn-capture" id="captureBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill="white"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Chat View -->
+            <div class="chat-container" id="chatContainer">
+                <!-- Messages will be added here dynamically -->
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="btn" id="scanBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+                        <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" fill="currentColor"/>
+                        <path d="M20 4H16.83L15.59 2.65C15.22 2.24 14.68 2 14.12 2H9.88C9.32 2 8.79 2.24 8.4 2.65L7.17 4H4C2.9 4 2 4.9 2 6V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V6C22 4.9 21.1 4 20 4ZM12 18C9.24 18 7 15.76 7 13C7 10.24 9.24 8 12 8C14.76 8 17 10.24 17 13C17 15.76 14.76 18 12 18Z" fill="currentColor"/>
+                    </svg>
+                    Scan Food Label
+                </button>
+                <div class="status" id="status">Tap the button to scan a food label</div>
+                <div class="error hidden" id="error"></div>
+            </div>
+        </main>
+
+        <!-- Microphone Button -->
+        <button class="btn-mic hidden" id="micBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 14C13.66 14 14.99 12.66 14.99 11L15 5C15 3.34 13.66 2 12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14Z" fill="white"/>
+                <path d="M17 11C17 14.31 14.31 17 11 17C7.69 17 5 14.31 5 11M12 20V22M7 22H17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        // DOM Elements
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const scanBtn = document.getElementById('scanBtn');
+        const micBtn = document.getElementById('micBtn');
+        const statusEl = document.getElementById('status');
+        const errorEl = document.getElementById('error');
+        const quotesContainer = document.getElementById('quotesContainer');
+        const cameraContainer = document.getElementById('cameraContainer');
+        const chatContainer = document.getElementById('chatContainer');
+        
+        // API Configuration - Update these URLs for production
+        // API Configuration - Update this URL to your Render backend URL
+        const API_BASE_URL = 'https://backend-ai-bflp.onrender.com';
+        const API_ENDPOINTS = {
+            BASE: API_BASE_URL,
+            ANALYZE: `${API_BASE_URL}/api/analyze`,
+            CHAT: `${API_BASE_URL}/api/chat`,
+            TTS: `${API_BASE_URL}/api/tts`
+        };
+
+        // Session variables
+        let stream = null;
+        let sessionId = null;
+        let isListening = false;
+        let recognition = null;
+        let currentQuoteIndex = 0;
+        let isSpeaking = false;
+        let silenceTimer = null;
+        
+        // List of phrases that should end the conversation
+        const ENDING_PHRASES = [
+            'thank you', 'thanks', 'bye', 'goodbye', 'see you', "that's all",
+            "i'm done", "that's it", 'that is all', 'no more questions',
+            "that's everything", 'nothing else', "i'm good", 'i am good',
+            "that's all for now", 'that is all for now', 'no more',
+            'thanks a lot', 'thank you very much', 'bye bye', 'good bye',
+            'see you later', 'talk to you later', 'have a good one'
+        ];
+        
+        // Function to check if message contains ending phrase
+        function isEndingPhrase(message) {
+            if (!message || typeof message !== 'string') return false;
+            const cleanMessage = message.toLowerCase().trim();
+            return ENDING_PHRASES.some(phrase => 
+                cleanMessage.includes(phrase) || 
+                cleanMessage === phrase
+            );
+        }
+        
+        // Function to end conversation gracefully
+        function endConversation() {
+            try {
+                const goodbyeMessages = [
+                    "You're welcome! Feel free to come back if you have more questions. Goodbye!",
+                    "Happy to help! Come back anytime. Goodbye!",
+                    "Glad I could assist. Have a great day!",
+                    "You're welcome! Take care and stay healthy!"
+                ];
+                
+                const randomMessage = goodbyeMessages[Math.floor(Math.random() * goodbyeMessages.length)];
+                addMessage(randomMessage, 'bot');
+                
+                // Stop listening and clean up
+                stopListening();
+                
+                // Speak the message and then stop speech synthesis
+                speak(randomMessage, () => {
+                    // Small delay before refreshing to allow speech to complete
+                    setTimeout(() => {
+                        window.speechSynthesis.cancel();
+                        // Refresh the page after a short delay
+                        setTimeout(() => {
+                            window.location.href = window.location.href.split('?')[0];
+                        }, 500);
+                    }, 500);
+                });
+                
+                return true;
+            } catch (error) {
+                console.error('Error ending conversation:', error);
+                return false;
+            }
+        }
+
+        const quotes = document.querySelectorAll('.quote');
+        
+        // Rotate quotes
+        function rotateQuotes() {
+            quotes[currentQuoteIndex].classList.remove('active');
+            currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
+            quotes[currentQuoteIndex].classList.add('active');
+        }
+        
+        // Initialize quote rotation
+        setInterval(rotateQuotes, 5000);
+        
+        // Initialize camera
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                video.srcObject = stream;
+                return true;
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                showError('Could not access camera. Please check permissions.');
+                return false;
+            }
+        }
+        
+        // Capture image from camera
+        function captureImage() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Stop camera stream
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Show captured image
+            video.style.display = 'none';
+            canvas.style.display = 'block';
+            captureBtn.style.display = 'none';
+            
+            // Process the image
+            processImage();
+        }
+        
+        // Process the captured image
+        async function processImage() {
+            try {
+                showStatus('Analyzing food label...');
+                
+                // Convert canvas to base64
+                const imageData = canvas.toDataURL('image/jpeg').split(',')[1];
+                
+                // Convert base64 to blob
+                const byteString = atob(imageData);
+                const mimeType = 'image/jpeg';
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([ab], { type: mimeType });
+                
+                // Create FormData and append the image
+                const formData = new FormData();
+                formData.append('image', blob, 'food-label.jpg');
+                
+                // Send to backend for analysis
+                console.log('Sending image to backend for analysis...');
+                const response = await fetch(API_ENDPOINTS.ANALYZE, {
+                    method: 'POST',
+                    body: formData,
+                    // Don't set Content-Type header when using FormData
+                    // The browser will set it automatically with the correct boundary
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    credentials: 'same-origin' // Include cookies if needed
+                });
+                
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server responded with error:', errorText);
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Received response from server:', data);
+                
+                if (data.success) {
+                    // Store the session ID for follow-up questions in window object
+                    window.sessionId = data.sessionId || 'default-session';
+                    console.log('Session ID set to:', window.sessionId);
+                    showChat();
+                    
+                    // Show the summary or a default message
+                    const message = data.summary || 'Analysis complete. What would you like to know about this product?';
+                    addMessage(message, 'bot');
+                    
+                    // Enable voice interaction
+                    micBtn.classList.remove('hidden');
+                    
+                    // Speak the message first, then start listening when speech ends
+                    speak(message, () => {
+                        // This callback runs after speech ends
+                        console.log('Speech ended, starting to listen...');
+                        isListening = true;
+                        startListening();
+                    });
+                } else {
+                    const errorMsg = data.error || data.message || 'Failed to process image';
+                    console.error('Server error:', errorMsg);
+                    throw new Error(errorMsg);
+                }
+                
+            } catch (error) {
+                console.error('Error processing image:', error);
+                let errorMessage = error.message;
+                
+                // Handle network errors
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Could not connect to the server. Please make sure the backend is running on port 3000.';
+                }
+                
+                // Check if this is our custom error message
+                if (errorMessage.includes('I couldn\'t read the food label clearly')) {
+                    showError(errorMessage); // Show the original friendly message
+                } else {
+                    showError(`I'm having trouble analyzing this image. Please make sure it's a clear photo of a food label and try again.`);
+                }
+                resetCamera();
+            }
+        }
+        
+        // Show chat interface
+        function showChat() {
+            cameraContainer.style.display = 'none';
+            chatContainer.style.display = 'flex';
+            quotesContainer.style.display = 'none';
+            scanBtn.textContent = 'Scan Another Item';
+            scanBtn.classList.remove('hidden');
+        }
+        
+        // Reset camera view
+        function resetCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            video.style.display = 'block';
+            canvas.style.display = 'none';
+            captureBtn.style.display = 'block';
+            cameraContainer.style.display = 'block';
+            chatContainer.style.display = 'none';
+            quotesContainer.style.display = 'flex';
+            
+            initCamera().then(success => {
+                if (!success) {
+                    scanBtn.disabled = true;
+                }
+            });
+        }
+        
+        // Add message to chat
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(sender === 'bot' ? 'bot-message' : 'user-message');
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Text-to-speech using backend TTS with fallback to browser TTS
+        async function speak(text, onEndCallback) {
+            if (!text) {
+                if (onEndCallback) onEndCallback();
+                return;
+            }
+
+            // Stop any ongoing speech recognition
+            stopListening();
+            isSpeaking = true;
+
+            try {
+                // First try using our backend TTS
+                const response = await fetch(API_ENDPOINTS.TTS, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'audio/mpeg'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: 'alloy' // Can be changed to 'echo', 'fable', 'onyx', 'nova', or 'shimmer'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`TTS request failed: ${response.status}`);
+                }
+                
+                // Create audio element from the response
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                
+                // Set up event handlers
+                audio.onended = () => {
+                    // Clean up
+                    URL.revokeObjectURL(audioUrl);
+                    isSpeaking = false;
+                    if (onEndCallback) onEndCallback();
+                    else startListening();
+                };
+                
+                audio.onerror = (error) => {
+                    console.error('Error playing TTS audio:', error);
+                    isSpeaking = false;
+                    URL.revokeObjectURL(audioUrl);
+                    if (onEndCallback) onEndCallback();
+                    else startListening();
+                };
+                
+                // Play the audio
+                await audio.play().catch(error => {
+                    console.error('Error playing audio:', error);
+                    throw error; // This will trigger the catch block below
+                });
+                
+            } catch (error) {
+                console.warn('Falling back to browser TTS:', error);
+                // Fallback to browser TTS if our TTS service fails
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    
+                    utterance.onend = () => {
+                        isSpeaking = false;
+                        if (onEndCallback) onEndCallback();
+                        else startListening();
+                    };
+                    
+                    utterance.onerror = (event) => {
+                        console.error('Browser TTS error:', event.error);
+                        isSpeaking = false;
+                        if (onEndCallback) onEndCallback();
+                        else startListening();
+                    };
+                    
+                    window.speechSynthesis.speak(utterance);
+                } else {
+                    // If no TTS available, just call the callback
+                    console.error('No TTS available');
+                    isSpeaking = false;
+                    if (onEndCallback) onEndCallback();
+                    else startListening();
+                }
+            }
+        }
+
+        
+        // Request microphone permission on page load
+        // async function requestMicrophonePermission() {
+        //     try {
+        //         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        //         // Stop all tracks to release the microphone
+        //         stream.getTracks().forEach(track => track.stop());
+        //         console.log('Microphone permission granted');
+        //         return true;
+        //     } catch (error) {
+        //         console.error('Microphone permission denied:', error);
+        //         showError('Microphone access is required for voice commands. Please allow microphone access and refresh the page.');
+        //         return false;
+        //     }
+        // }
+
+        // Error boundary for speech recognition
+        function withErrorBoundary(fn, errorMessage = 'An error occurred') {
+            return async (...args) => {
+                try {
+                    return await fn(...args);
+                } catch (error) {
+                    console.error(errorMessage, error);
+                    showError(`${errorMessage}: ${error.message}`);
+                    throw error;
+                }
+            };
+        }
+
+        // Retry wrapper for API calls
+        async function withRetry(fn, maxRetries = 3, delay = 1000) {
+            let lastError;
+            
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    return await fn();
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Attempt ${attempt} failed:`, error);
+                    
+                    if (attempt < maxRetries) {
+                        showStatus(`Retrying... (${attempt}/${maxRetries})`);
+                        await new Promise(resolve => setTimeout(resolve, delay * attempt));
+                    }
+                }
+            }
+            
+            throw lastError || new Error('Max retries reached');
+        }
+
+        // Initialize speech recognition with error handling
+        function initSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                const error = 'Speech recognition is not supported in your browser';
+                console.error(error);
+                showError(error);
+                return false;
+            }
+
+            try {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;  
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = () => {
+                    isListening = true;
+                    micBtn.classList.add('listening');
+                    showStatus('Listening...');
+                    console.log('Speech recognition started');
+                };
+
+                recognition.onresult = withErrorBoundary((event) => {
+                    const transcript = Array.from(event.results)
+                        .map(result => result[0])
+                        .map(result => result.transcript)
+                        .join('');
+
+                    // Update the chat input if it exists
+                    const chatInput = document.querySelector('.chat-input input') || document.getElementById('userInput');
+                    if (chatInput) {
+                        chatInput.value = transcript;
+                    }
+
+                    // If this is a final result, send the message
+                    if (event.results[0].isFinal) {
+                        const message = transcript.trim();
+                        if (message) {
+                            handleUserMessage(message);
+                        }
+                    }
+                }, 'Error processing speech recognition result');
+
+                recognition.onerror = (event) => {
+                    const errorMap = {
+                        'no-speech': 'No speech was detected',
+                        'audio-capture': 'No microphone was found',
+                        'not-allowed': 'Permission to use microphone is blocked',
+                        'aborted': 'Listening was aborted',
+                        'network': 'Network error occurred',
+                        'not-allowed': 'Microphone permission denied',
+                        'service-not-allowed': 'Microphone service not allowed'
+                    };
+                    
+                    const errorMessage = errorMap[event.error] || `Error: ${event.error}`;
+                    console.error('Speech recognition error:', event.error, event);
+                    showError(errorMessage);
+                    
+                    // Auto-recover for certain errors
+                    const recoverableErrors = ['no-speech', 'aborted', 'network'];
+                    if (recoverableErrors.includes(event.error)) {
+                        setTimeout(() => {
+                            if (isListening) startListening();
+                        }, 1000);
+                    } else {
+                        isListening = false;
+                        micBtn.classList.remove('listening');
+                    }
+                };
+
+                recognition.onend = () => {
+                    micBtn.classList.remove('listening');
+                    if (isListening && !isSpeaking) {
+                        // Small delay before restarting to prevent rapid cycling
+                        setTimeout(() => {
+                            if (isListening) recognition.start();
+                        }, 300);
+                    }
+                };
+
+                return true;
+            } catch (error) {
+                console.error('Failed to initialize speech recognition:', error);
+                showError('Failed to initialize speech recognition');
+                return false;
+            }
+        }
+
+        // Handle user message with retry logic
+        async function handleUserMessage(message) {
+            try {
+                // Check if this is an ending phrase
+                if (isEndingPhrase(message)) {
+                    endConversation();
+                    return;
+                }
+                
+                addMessage(message, 'user');
+                
+                // Show typing indicator
+                const typingIndicator = addMessage('...', 'bot');
+                
+                // Use the retry wrapper for the API call
+                const response = await withRetry(async () => {
+                    // Check if we have a valid session ID
+                    if (!window.sessionId) {
+                        throw new Error('Please take a photo of a food label first');
+                    }
+                    
+                    console.log('Sending message with session ID:', window.sessionId);
+                    
+                    // Prepare the payload for the chat endpoint
+                    const payload = {
+                        message: message,
+                        isFollowUp: true
+                    };
+                    
+                    console.log('Sending chat request with session ID:', window.sessionId);
+                    
+                    const response = await fetch(API_ENDPOINTS.CHAT, {
+                        method: 'POST',
+                        body: JSON.stringify(payload),
+                        credentials: 'include',
+                        mode: 'cors',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Session-ID': window.sessionId || '',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('API Error:', {
+                            status: response.status,
+                            statusText: response.statusText,
+                            errorData
+                        });
+                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Remove typing indicator
+                    if (typingIndicator && typingIndicator.remove) {
+                        typingIndicator.remove();
+                    }
+                    
+                    return data;
+                });
+                
+                // Handle successful response
+                if (response.success) {
+                    // Store session ID if provided
+                    if (response.sessionId) {
+                        window.sessionId = response.sessionId;
+                    }
+                    
+                    // Add bot response to chat
+                    const botMessage = response.response || response.message || "I'm your health assistant. How can I help you today?";
+                    addMessage(botMessage, 'bot');
+                    
+                    // Speak the response
+                    speak(botMessage);
+                } else {
+                    throw new Error(response.error || 'Unknown error occurred');
+                }
+            } catch (error) {
+                console.error('Error handling message:', error);
+                showError(`Failed to get response: ${error.message}`);
+                
+                // Show error message to user
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'error-message';
+                errorMessage.textContent = 'Sorry, I encountered an error. Please try again.';
+                document.querySelector('.chat-container').appendChild(errorMessage);
+                
+                // Auto-remove error message after 5 seconds
+                setTimeout(() => {
+                    if (errorMessage.parentNode) {
+                        errorMessage.parentNode.removeChild(errorMessage);
+                    }
+                }, 5000);
+            }
+        }
+
+        // Start listening to user
+        function startListening() {
+            if (isSpeaking) return;
+            
+            // Check if we have a session ID (i.e., we've analyzed an image)
+            if (!window.sessionId) {
+                console.log('No session ID, not starting recognition');
+                showError('Please take a photo of a food label first');
+                return;
+            }
+
+            if (!recognition) {
+                if (!initSpeechRecognition()) return;
+            }
+
+            try {
+                isListening = true;
+                recognition.start();
+                micBtn.classList.add('listening');
+                showStatus('Listening...');
+            } catch (e) {
+                console.error('STT start failed', e);
+            }
+        }
+
+
+        // Stop listening to user
+        async function stopListening() {
+            if (!recognition) return;
+
+            console.log('Stopping recognition...');
+            isListening = false;
+
+            try {
+                if (recognition.readyState === 'recording') {
+                    recognition.stop();
+                    console.log('Recognition stopped successfully');
+                }
+            } catch (error) {
+                console.error('Error stopping recognition:', error);
+            }
+
+            // Update UI
+            micBtn.innerHTML = '&#x1F3A4;';
+            micBtn.classList.remove('listening');
+            showStatus('Tap the microphone to speak');
+
+            // Clear any pending timeouts
+            if (silenceTimer) {
+                clearTimeout(silenceTimer);
+                silenceTimer = null;
+            }
+        }
+        
+        // Toggle listening state
+        async function toggleListening() {
+            console.log('toggleListening called, current state:', { isListening });
+            
+            if (isListening) {
+                await stopListening();
+            } else {
+                // Ensure any previous recognition is fully stopped first
+                if (recognition && recognition.readyState === 'recording') {
+                    try {
+                        recognition.stop();
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                    } catch (e) {
+                        console.log('Error stopping previous recognition:', e);
+                    }
+                }
+                await startListening();
+            }
+        }
+        
+        // Reset the app to initial state
+        function resetApp() {
+            stopListening();
+            micBtn.classList.add('hidden');
+            sessionId = null;
+            
+            // Clear chat
+            chatContainer.innerHTML = '';
+            
+            // Reset UI
+            resetCamera();
+            showStatus('Tap the button to scan a food label');
+            scanBtn.textContent = 'Scan Food Label';
+        }
+        
+        // Helper functions
+        function showStatus(message) {
+            statusEl.textContent = message;
+            errorEl.classList.add('hidden');
+        }
+        
+        function showError(message) {
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+            statusEl.textContent = '';
+        }
+        
+        // Event Listeners
+        scanBtn.addEventListener('click', async () => {
+            if (cameraContainer.style.display === 'block') {
+                // Already showing camera, reset
+                resetApp();
+            } else {
+                // Show camera
+                cameraContainer.style.display = 'block';
+                quotesContainer.style.display = 'none';
+                scanBtn.classList.add('hidden');
+                showStatus('Position the food label in the frame and tap capture');
+                
+                const success = await initCamera();
+                if (success) {
+                    captureBtn.style.display = 'block';
+                } else {
+                    scanBtn.classList.remove('hidden');
+                }
+            }
+        });
+        
+        captureBtn.addEventListener('click', captureImage);
+        micBtn.addEventListener('click', toggleListening);
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for camera support
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showError('Camera not supported in your browser');
+                scanBtn.disabled = true;
+            }
+            
+            // Check for speech recognition support
+            if (!('webkitSpeechRecognition' in window)) {
+                console.warn('Speech recognition not supported');
+            }
+        });
+    </script>
+</body>
+</html>
